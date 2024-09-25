@@ -21,7 +21,7 @@ class _SigninPageState extends State<SigninPage> {
   Future<void> _signIn() async {
     if (email.isEmpty || password.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Please enter both email and password')),
+        const SnackBar(content: Text('Please enter both email and password')),
       );
       return;
     }
@@ -64,20 +64,20 @@ class _SigninPageState extends State<SigninPage> {
     return Scaffold(
       appBar: AppBar(
         automaticallyImplyLeading: false,
-        title: Text("Copsify AI"),
+        title: const Text("Copsify AI"),
       ),
       body: Center(
         child: Column(
           children: [
-            Padding(
-              padding: const EdgeInsets.only(top: 50),
+            const Padding(
+              padding: EdgeInsets.only(top: 50),
               child: Text(
                 "Sign in",
                 style: TextStyle(fontSize: 32),
               ),
             ),
-            SizedBox(height: 30),
-            Container(
+            const SizedBox(height: 30),
+            SizedBox(
               height: 41,
               width: 242,
               child: TextField(
@@ -93,8 +93,8 @@ class _SigninPageState extends State<SigninPage> {
                 ),
               ),
             ),
-            SizedBox(height: 30),
-            Container(
+            const SizedBox(height: 30),
+            SizedBox(
               height: 41,
               width: 242,
               child: TextField(
@@ -110,10 +110,10 @@ class _SigninPageState extends State<SigninPage> {
                 ),
               ),
             ),
-            SizedBox(height: 20),
+            const SizedBox(height: 20),
             ElevatedButton(
               onPressed: _signIn, // Call the _signIn function
-              child: Text("Sign in"),
+              child: const Text("Sign in"),
             ),
           ],
         ),

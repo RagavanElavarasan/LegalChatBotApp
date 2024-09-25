@@ -89,7 +89,7 @@ class _SignupPageState extends State<SignupPage> {
               child: Text("Sign up", style: TextStyle(fontSize: 32)),
             ),
             const SizedBox(height: 30),
-            Container(
+            SizedBox(
               height: 41,
               width: 242,
               child: TextField(
@@ -103,7 +103,7 @@ class _SignupPageState extends State<SignupPage> {
               ),
             ),
             const SizedBox(height: 30),
-            Container(
+            SizedBox(
               height: 41,
               width: 242,
               child: TextField(
@@ -118,7 +118,7 @@ class _SignupPageState extends State<SignupPage> {
               ),
             ),
             const SizedBox(height: 30),
-            Container(
+            SizedBox(
               height: 41,
               width: 242,
               child: TextField(
@@ -133,7 +133,7 @@ class _SignupPageState extends State<SignupPage> {
               ),
             ),
             const SizedBox(height: 30),
-            Container(
+            SizedBox(
               height: 41,
               width: 242,
               child: TextField(
