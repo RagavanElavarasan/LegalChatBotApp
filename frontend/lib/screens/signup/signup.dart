@@ -1,8 +1,7 @@
-import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:frontend/screens/signin/signin.dart';
 import 'package:http/http.dart' as http;
-
+import 'dart:convert';
 
 class SignupPage extends StatefulWidget {
   const SignupPage({super.key});
@@ -15,7 +14,8 @@ class _SignupPageState extends State<SignupPage> {
   final TextEditingController _usernameController = TextEditingController();
   final TextEditingController _emailController = TextEditingController();
   final TextEditingController _passwordController = TextEditingController();
-  final TextEditingController _confirmPasswordController = TextEditingController();
+  final TextEditingController _confirmPasswordController =
+      TextEditingController();
 
   Future<void> _signup() async {
     final String username = _usernameController.text.trim();
@@ -23,8 +23,10 @@ class _SignupPageState extends State<SignupPage> {
     final String password = _passwordController.text.trim();
     final String confirmPassword = _confirmPasswordController.text.trim();
 
-    // Validation
-    if (username.isEmpty || email.isEmpty || password.isEmpty || confirmPassword.isEmpty) {
+    if (username.isEmpty ||
+        email.isEmpty ||
+        password.isEmpty ||
+        confirmPassword.isEmpty) {
       _showSnackbar("All fields are required.");
       return;
     }
@@ -35,7 +37,6 @@ class _SignupPageState extends State<SignupPage> {
     }
 
     try {
-      // Prepare the signup data payload
       final Map<String, dynamic> signupPayload = {
         "user_name": username,
         "email": email,
@@ -45,7 +46,7 @@ class _SignupPageState extends State<SignupPage> {
 
       // Make the POST request to your Flask backend
       var response = await http.post(
-        Uri.parse('http://10.0.2.2:5001/signup'), // Adjust this with your server IP if needed
+        Uri.parse('http://10.0.2.2:5001/signup'),
         headers: {"Content-Type": "application/json"},
         body: json.encode(signupPayload),
       );
@@ -58,12 +59,10 @@ class _SignupPageState extends State<SignupPage> {
           MaterialPageRoute(builder: (context) => const SigninPage()),
         );
       } else {
-        // If signup failed, show the error message in the SnackBar
         var responseBody = json.decode(response.body);
         _showSnackbar(responseBody["error"] ?? "Signup failed. Try again.");
       }
     } catch (e) {
-      // Handle connection errors
       _showSnackbar("An error occurred. Please try again.");
       print('Error: $e');
     }
@@ -81,79 +80,98 @@ class _SignupPageState extends State<SignupPage> {
         automaticallyImplyLeading: false,
         title: const Text("Copsify AI"),
       ),
-      body: Center(
-        child: Column(
-          children: [
-            const Padding(
-              padding: EdgeInsets.only(top: 50),
-              child: Text("Sign up", style: TextStyle(fontSize: 32)),
-            ),
-            const SizedBox(height: 30),
-            SizedBox(
-              height: 41,
-              width: 242,
-              child: TextField(
-                controller: _usernameController,
-                decoration: InputDecoration(
-                  labelText: 'Enter your username',
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(20),
+      body: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 20.0),
+        child: Center(
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              const Text("Sign up",
+                  style: TextStyle(fontSize: 32, fontWeight: FontWeight.bold)),
+              const SizedBox(height: 30),
+              _buildTextField(_usernameController, 'Enter your username'),
+              const SizedBox(height: 20),
+              _buildTextField(_emailController, 'Enter your email address'),
+              const SizedBox(height: 20),
+              _buildTextField(_passwordController, 'Enter your password',
+                  obscureText: true),
+              const SizedBox(height: 20),
+              _buildTextField(
+                  _confirmPasswordController, 'Re-enter your password',
+                  obscureText: true),
+              const SizedBox(height: 20),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  const Text("Already have an account?"),
+                  TextButton(
+                    onPressed: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                            builder: (context) => const SigninPage()),
+                      );
+                    },
+                    child: const Text("Sign in",
+                        style: TextStyle(color: Color(0xFF083087))),
                   ),
-                ),
+                ],
               ),
-            ),
-            const SizedBox(height: 30),
-            SizedBox(
-              height: 41,
-              width: 242,
-              child: TextField(
-                controller: _emailController,
-                keyboardType: TextInputType.emailAddress,
-                decoration: InputDecoration(
-                  labelText: 'Enter your email address',
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(20),
+              const SizedBox(height: 20),
+              ElevatedButton(
+                onPressed: _signup,
+                style: ElevatedButton.styleFrom(
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 70, vertical: 15),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(30.0),
                   ),
+                  backgroundColor: Color(0xFF083087),
                 ),
+                child: const Text("Sign up",
+                    style: TextStyle(fontSize: 16, color: Colors.white)),
               ),
-            ),
-            const SizedBox(height: 30),
-            SizedBox(
-              height: 41,
-              width: 242,
-              child: TextField(
-                controller: _passwordController,
-                obscureText: true,  // Hide password text
-                decoration: InputDecoration(
-                  labelText: 'Enter your password',
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(20),
-                  ),
-                ),
+              const SizedBox(height: 30),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  _buildSocialMediaIcon('assets/images/google.png', 30, 30),
+                  const SizedBox(width: 20),
+                  _buildSocialMediaIcon(
+                      'assets/images/microsoft.png', 50, 50), // Adjusted width
+                  const SizedBox(width: 20),
+                  _buildSocialMediaIcon('assets/images/facebook.png', 30, 30),
+                ],
               ),
-            ),
-            const SizedBox(height: 30),
-            SizedBox(
-              height: 41,
-              width: 242,
-              child: TextField(
-                controller: _confirmPasswordController,
-                obscureText: true,  // Hide confirm password text
-                decoration: InputDecoration(
-                  labelText: 'Re-enter your password',
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(20),
-                  ),
-                ),
-              ),
-            ),
-            const SizedBox(height: 30),
-            ElevatedButton(
-              onPressed: _signup, // Call the signup function
-              child: const Text("Sign up"),
-            ),
-          ],
+            ],
+          ),
         ),
+      ),
+    );
+  }
+
+  Widget _buildTextField(TextEditingController controller, String labelText,
+      {bool obscureText = false}) {
+    return TextField(
+      controller: controller,
+      obscureText: obscureText,
+      decoration: InputDecoration(
+        labelText: labelText,
+        border: const OutlineInputBorder(
+            borderRadius: BorderRadius.all(Radius.circular(20))),
+      ),
+    );
+  }
+
+  Widget _buildSocialMediaIcon(String assetPath, double height, double width) {
+    return InkWell(
+      onTap: () {
+        // Add logic for social media sign-in
+      },
+      child: Image.asset(
+        assetPath,
+        height: height,
+        width: width, // Set custom width
       ),
     );
   }
