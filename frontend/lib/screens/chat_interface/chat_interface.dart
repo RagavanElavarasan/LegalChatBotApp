@@ -45,7 +45,7 @@ class _ChatInterfacePageState extends State<ChatInterfacePage> {
     // Send message to backend
     try {
       final response = await http.post(
-        Uri.parse('http://10.0.2.2:5000/chat'),
+        Uri.parse('http://10.0.2.2:5001/chat'),
         headers: {'Content-Type': 'application/json'},
         body: json.encode({'message': userInput}),
       );

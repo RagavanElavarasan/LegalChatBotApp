@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:frontend/screens/chat_interface/chat_interface.dart';
 import 'package:frontend/screens/signin/signin.dart'; // Importing the signin screen
 import 'package:frontend/screens/signup/signup.dart';
+import 'package:frontend/screens/splash/splash.dart';
 import 'package:get/get.dart'; // GetX package for state management and navigation
 
 void main() {
@@ -13,9 +14,9 @@ class MyApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return const GetMaterialApp( // Using GetMaterialApp for GetX support
+    return GetMaterialApp( // Using GetMaterialApp for GetX support
       debugShowCheckedModeBanner: false, // Hides the debug banner
-      home: ChatInterfacePage() // Setting the initial page to SigninPage
+      home: SplashScreen(), // Set the chat interface as the home page
     );
   }
 }
