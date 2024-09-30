@@ -5,85 +5,30 @@ from flask import Flask, request, jsonify
 from flask_cors import CORS
 from sentence_transformers import SentenceTransformer
 from sklearn.preprocessing import normalize
-from googletrans import Translator  # Import googletrans
-from werkzeug.security import generate_password_hash, check_password_hash
-from db_connection import get_db
+from googletrans import Translator
 import os
 import pickle
+from db_connection import get_db  # Import the MongoDB connection
 
 app = Flask(__name__)
 CORS(app)
 
-# --- PART 1: User Authentication ---
-
-# Get the MongoDB database and access the 'users' collection
-db = get_db()
-users_collection = db['users']
-
-# Route for user signup
-@app.route('/signup', methods=['POST'])
-def signup():
-    data = request.json
-    user_name = data.get('user_name')
-    email = data.get('email')
-    password = data.get('password')
-    confirm_password = data.get('confirm_password')
-
-    # Check for required fields
-    if not all([user_name, email, password, confirm_password]):
-        return jsonify({"error": "All fields are required"}), 400
-
-    # Check if the passwords match
-    if password != confirm_password:
-        return jsonify({"error": "Passwords do not match"}), 400
-
-    # Check if the email is already in use
-    if users_collection.find_one({"email": email}):
-        return jsonify({"error": "Email already exists"}), 400
-
-    # Hash the password for security
-    hashed_password = generate_password_hash(password)
-
-    # Insert the user into the MongoDB collection
-    user_id = users_collection.insert_one({
-        "user_name": user_name,
-        "email": email,
-        "password": hashed_password
-    }).inserted_id
-
-    return jsonify({"message": "User created", "user_id": str(user_id)}), 201
-
-# Route for user login
-@app.route('/login', methods=['POST'])
-def login():
-    data = request.json
-    email = data['email']
-    password = data['password']
-
-    # Find the user in the MongoDB collection
-    user = users_collection.find_one({"email": email})
-
-    if not user:
-        return jsonify({"error": "Invalid email or password"}), 400
-
-    # Check if the password matches the stored hashed password
-    if check_password_hash(user['password'], password):
-        return jsonify({"message": "Login successful", "user_id": str(user['_id'])}), 200
-    else:
-        return jsonify({"error": "Invalid email or password"}), 400
-
-# --- PART 2: Legal Document Similarity Search ---
-
 # Load the sentence transformer model
 model = SentenceTransformer('sentence-transformers/paraphrase-mpnet-base-v2')
 
-# File paths
-DATA_PATH = 'ipc_sections1.csv'
+# MongoDB configuration: Use the connection from db_connection.py
+db = get_db()
+legal_collection = db['dataset']  # Collection name remains 'dataset'
+
 EMBEDDINGS_PATH = 'legal_embeddings.pkl'
 
-# Load the CSV data
-df = pd.read_csv(DATA_PATH)
-legal_data = df.to_dict(orient='records')
+def load_legal_data_from_db():
+    """Fetch legal data from MongoDB."""
+    legal_data = list(legal_collection.find({}, {'_id': 0}))  # Retrieve all documents and exclude the '_id' field
+    return legal_data
+
+# Fetch legal data from the database
+legal_data = load_legal_data_from_db()
 
 def load_or_create_embeddings():
     """Load precomputed embeddings from disk or create them if they don't exist."""
@@ -148,6 +93,5 @@ def chat():
 
     return jsonify(response)
 
-# Run the Flask app
-if __name__ == '__main__':
-    app.run(debug=True, port=5001)
+if __name__ == "__main__":
+    app.run(debug=True,port=5001)
