@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
+import 'package:speech_to_text/speech_to_text.dart' as stt;
 
 class ChatInterfacePage extends StatefulWidget {
   const ChatInterfacePage({super.key});
@@ -15,12 +16,44 @@ class _ChatInterfacePageState extends State<ChatInterfacePage> {
   bool isLoading = false;
   bool showPrompts = true;
   String errorMessage = '';
+  late stt.SpeechToText _speech;
+  bool _isListening = false;
+  String _voiceInput = '';
 
   // Example prompts
   final List<String> examplePrompts = [
     "ஆள்மாறாட்டம் செய்ததற்காக IPC பிரிவு 140 இன் கீழ் தனிநபர் என்ன தண்டனையை எதிர்கொள்ளலாம்?",
     "ஒரு பொது ஊழியர் வேண்டுமென்றே தனது காவலில் இருக்கும் போர்க் கைதியை தடுப்புக் காவலில் இருந்து தப்பிக்க அனுமதிக்கிறார்",
   ];
+
+  @override
+  void initState() {
+    super.initState();
+    _speech = stt.SpeechToText();
+  }
+
+  // Function to start listening to voice input
+  void _startListening() async {
+    bool available = await _speech.initialize();
+    if (available) {
+      setState(() => _isListening = true);
+      _speech.listen(
+        onResult: (val) => setState(() {
+          _voiceInput = val.recognizedWords;
+          _userInputController.text = _voiceInput;
+        }),
+        localeId: 'ta_IN', // Use Tamil language (adjust if needed)
+      );
+    } else {
+      setState(() => _isListening = false);
+    }
+  }
+
+  // Function to stop listening to voice input
+  void _stopListening() {
+    setState(() => _isListening = false);
+    _speech.stop();
+  }
 
   // Function to send message to the backend
   Future<void> _sendMessage(String userInput) async {
@@ -43,7 +76,7 @@ class _ChatInterfacePageState extends State<ChatInterfacePage> {
     // Send message to backend
     try {
       final response = await http.post(
-        Uri.parse('http://10.0.2.2:5001/chat'),
+        Uri.parse('http://192.168.199.26:5001/chat'), // Corrected URL
         headers: {'Content-Type': 'application/json'},
         body: json.encode({'message': userInput}),
       );
@@ -62,17 +95,19 @@ class _ChatInterfacePageState extends State<ChatInterfacePage> {
         });
       } else {
         setState(() {
-          errorMessage = 'Error fetching data from the chatbot.';
+          errorMessage = 'Error fetching data from the chatbot. Status code: ${response.statusCode}';
         });
       }
-    } catch (error) {
+    } catch (error, stackTrace) {
+      // Print error and stack trace for debugging
+      print('Error: $error');
+      print('StackTrace: $stackTrace');
+
       setState(() {
-        errorMessage = 'Error fetching data from the chatbot.';
+        errorMessage = 'Error fetching data from the chatbot: $error';
       });
     } finally {
-      setState(() {
-        isLoading = false;
-      });
+      setState(() => isLoading = false);
     }
   }
 
@@ -168,9 +203,14 @@ class _ChatInterfacePageState extends State<ChatInterfacePage> {
                   ),
                   const SizedBox(width: 8),
                   ElevatedButton(
+                    onPressed: _isListening ? _stopListening : _startListening,
+                    child: Text(_isListening ? 'Stop' : '🎤 Speak'),
+                  ),
+                  const SizedBox(width: 8),
+                  ElevatedButton(
                     onPressed: () => _sendMessage(_userInputController.text),
                     child: const Text('Send'),
-                  )
+                  ),
                 ],
               ),
             ),
