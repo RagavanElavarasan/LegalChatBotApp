@@ -15,7 +15,7 @@ class _SplashScreenState extends State<SplashScreen> {
   void initState() {
     super.initState();
     Timer(Duration(seconds: 2), () {
-      Get.to(()=>ChatInterfacePage());
+      Get.to(()=>SignupPage());
     }
     );
   }
