@@ -8,18 +8,26 @@ from sklearn.preprocessing import normalize
 from googletrans import Translator
 import os
 import pickle
-from db_connection import get_db  # Import the MongoDB connection
+import jwt  # Import PyJWT
+import datetime
+from werkzeug.security import generate_password_hash, check_password_hash
+from db_connection import get_db
 
 app = Flask(__name__)
 CORS(app)
 
+# JWT Secret Key
+app.config['SECRET_KEY'] = 'your_secret_key'  # Replace with a more secure secret key
+
 # Load the sentence transformer model
 model = SentenceTransformer('sentence-transformers/paraphrase-mpnet-base-v2')
 
-# MongoDB configuration: Use the connection from db_connection.py
+# Initialize MongoDB collections
 db = get_db()
-legal_collection = db['dataset']  # Collection name remains 'dataset'
+users_collection = db['users']
+legal_collection = db['datasets']
 
+# Embeddings path for caching
 EMBEDDINGS_PATH = 'legal_embeddings.pkl'
 
 def load_legal_data_from_db():
@@ -39,7 +47,8 @@ def load_or_create_embeddings():
     else:
         # Compute embeddings in batches and normalize
         print("Computing embeddings...")
-        legal_embeddings = model.encode([str(doc['title']) for doc in legal_data if isinstance(doc['title'], (str, bytes))], batch_size=16, convert_to_numpy=True)
+        legal_titles = [str(doc['title']) for doc in legal_data if isinstance(doc.get('title'), (str, bytes))]
+        legal_embeddings = model.encode(legal_titles, batch_size=16, convert_to_numpy=True)
         embeddings_matrix = normalize(np.array(legal_embeddings), axis=1)
         
         # Save embeddings to file for future use
@@ -63,6 +72,62 @@ def find_similar_documents(query, top_k=5):
     D, I = index.search(query_embedding, top_k)
     
     return I, D
+
+@app.route('/signup', methods=['POST'])
+def signup():
+    data = request.json
+    user_name = data.get('user_name')
+    email = data.get('email')
+    password = data.get('password')
+    confirm_password = data.get('confirm_password')
+
+    # Check for required fields
+    if not all([user_name, email, password, confirm_password]):
+        return jsonify({"error": "All fields are required"}), 400
+
+    # Check if the passwords match
+    if password != confirm_password:
+        return jsonify({"error": "Passwords do not match"}), 400
+
+    # Check if the email is already in use
+    if users_collection.find_one({"email": email}):
+        return jsonify({"error": "Email already exists"}), 400
+
+    # Hash the password for security
+    hashed_password = generate_password_hash(password)
+
+    # Insert the user into the MongoDB collection
+    user_id = users_collection.insert_one({
+        "user_name": user_name,
+        "email": email,
+        "password": hashed_password
+    }).inserted_id
+
+    return jsonify({"message": "User created", "user_id": str(user_id)}), 201
+
+@app.route('/login', methods=['POST'])
+def login():
+    data = request.json
+    email = data['email']
+    password = data['password']
+
+    # Find the user in the MongoDB collection
+    user = users_collection.find_one({"email": email})
+
+    if not user:
+        return jsonify({"error": "Invalid email or password"}), 400
+
+    # Check if the password matches the stored hashed password
+    if check_password_hash(user['password'], password):
+        # Generate a JWT token for the user
+        token = jwt.encode({
+            'user_id': str(user['_id']),
+            'exp': datetime.datetime.utcnow() + datetime.timedelta(hours=24)  # Token expires in 24 hours
+        }, app.config['SECRET_KEY'], algorithm="HS256")
+        
+        return jsonify({"message": "Login successful", "token": token}), 200
+    else:
+        return jsonify({"error": "Invalid email or password"}), 400
 
 @app.route('/chat', methods=['POST'])
 def chat():
@@ -94,4 +159,4 @@ def chat():
     return jsonify(response)
 
 if __name__ == "__main__":
-    app.run(debug=True,port=5001)
+    app.run(debug=True, port=5001)

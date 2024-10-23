@@ -9,6 +9,7 @@ void main() {
   runApp(const MyApp()); // Entry point of the Flutter app
 }
 
+
 class MyApp extends StatelessWidget {
   const MyApp({super.key});
 
@@ -16,7 +17,7 @@ class MyApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return GetMaterialApp( // Using GetMaterialApp for GetX support
       debugShowCheckedModeBanner: false, // Hides the debug banner
-      home: SplashScreen(), // Set the chat interface as the home page
+      home: ChatInterfacePage(email: "", username: "", firstLetter: "")// Set the chat interface as the home page
     );
   }
 }
